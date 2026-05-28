@@ -8,6 +8,7 @@ import {
   Mail,
   Plus,
   RefreshCw,
+  Search,
   Sparkles,
   Trash2,
   Wand2,
