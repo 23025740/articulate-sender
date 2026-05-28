@@ -115,6 +115,23 @@ function Index() {
     [inputs],
   );
 
+  const filteredHistory = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return history.filter((h) => {
+      const matchesSearch =
+        q === "" ||
+        h.subject.toLowerCase().includes(q) ||
+        h.body.toLowerCase().includes(q) ||
+        h.inputs.purpose.toLowerCase().includes(q) ||
+        h.inputs.details.toLowerCase().includes(q);
+      const matchesAudience =
+        filterAudience === "All" || h.inputs.audience === filterAudience;
+      const matchesTone =
+        filterTone === "All" || h.inputs.tone === filterTone;
+      return matchesSearch && matchesAudience && matchesTone;
+    });
+  }, [history, searchQuery, filterAudience, filterTone]);
+
   async function callApi(payload: Record<string, unknown>): Promise<Result> {
     const res = await fetch("/api/generate-email", {
       method: "POST",
