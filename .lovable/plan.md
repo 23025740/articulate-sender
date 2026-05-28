@@ -41,5 +41,5 @@ Clean & professional palette: near-white background `#fafbfc`, soft border `#e8e
 
 ### Out of scope
 - No accounts, no Lovable Cloud, no database.
-- No multi-variation generation (per your selection).
+- No multi-variation generation.
 - No actual email sending — generation + copy/download only.
