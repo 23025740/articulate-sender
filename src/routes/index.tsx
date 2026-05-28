@@ -8,6 +8,7 @@ import {
   Mail,
   Plus,
   RefreshCw,
+  Search,
   Sparkles,
   Trash2,
   Wand2,
@@ -101,6 +102,9 @@ function Index() {
   const [refining, setRefining] = useState(false);
   const [refineText, setRefineText] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAudience, setFilterAudience] = useState("All");
+  const [filterTone, setFilterTone] = useState("All");
 
   useEffect(() => {
     setHistory(loadHistory());
@@ -110,6 +114,23 @@ function Index() {
     () => inputs.purpose.trim().length > 0 && inputs.details.trim().length > 0,
     [inputs],
   );
+
+  const filteredHistory = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return history.filter((h) => {
+      const matchesSearch =
+        q === "" ||
+        h.subject.toLowerCase().includes(q) ||
+        h.body.toLowerCase().includes(q) ||
+        h.inputs.purpose.toLowerCase().includes(q) ||
+        h.inputs.details.toLowerCase().includes(q);
+      const matchesAudience =
+        filterAudience === "All" || h.inputs.audience === filterAudience;
+      const matchesTone =
+        filterTone === "All" || h.inputs.tone === filterTone;
+      return matchesSearch && matchesAudience && matchesTone;
+    });
+  }, [history, searchQuery, filterAudience, filterTone]);
 
   async function callApi(payload: Record<string, unknown>): Promise<Result> {
     const res = await fetch("/api/generate-email", {
@@ -255,22 +276,87 @@ function Index() {
               <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 History
               </span>
-              {history.length > 0 && (
-                <button
-                  onClick={() => setHistory(clearHistory())}
-                  className="text-xs text-muted-foreground transition hover:text-foreground"
-                >
-                  Clear
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {(searchQuery.trim() !== "" || filterAudience !== "All" || filterTone !== "All") && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setFilterAudience("All");
+                      setFilterTone("All");
+                    }}
+                    className="text-xs text-primary transition hover:text-primary/80"
+                  >
+                    Clear filters
+                  </button>
+                )}
+                {history.length > 0 && (
+                  <button
+                    onClick={() => setHistory(clearHistory())}
+                    className="text-xs text-muted-foreground transition hover:text-foreground"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
             </div>
+
+            {history.length > 0 && (
+              <div className="mb-3 space-y-2">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search emails…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-8 pl-8 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select
+                    value={filterAudience}
+                    onValueChange={(v) => setFilterAudience(v)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Audience" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All audiences</SelectItem>
+                      {AUDIENCES.map((a) => (
+                        <SelectItem key={a} value={a}>
+                          {a}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={filterTone}
+                    onValueChange={(v) => setFilterTone(v)}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue placeholder="Tone" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All tones</SelectItem>
+                      {TONES.map((t) => (
+                        <SelectItem key={t} value={t}>
+                          {t}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
-              {history.length === 0 && (
+              {filteredHistory.length === 0 && (
                 <p className="px-1 text-xs text-muted-foreground">
-                  Generated emails will appear here.
+                  {history.length === 0
+                    ? "Generated emails will appear here."
+                    : "No results match your filters."}
                 </p>
               )}
-              {history.map((h) => (
+              {filteredHistory.map((h) => (
                 <button
                   key={h.id}
                   onClick={() => openHistory(h)}
