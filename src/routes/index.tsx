@@ -102,6 +102,9 @@ function Index() {
   const [refining, setRefining] = useState(false);
   const [refineText, setRefineText] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterAudience, setFilterAudience] = useState("All");
+  const [filterTone, setFilterTone] = useState("All");
 
   useEffect(() => {
     setHistory(loadHistory());
